@@ -30,3 +30,19 @@ convert_ctf_to_cpia <- function(x){
   return(y)
 
 }
+
+
+cap_outliers <- function(x, k = 3) {
+  if (!is.numeric(x)) stop("x must be numeric")
+
+  m <- mean(x, na.rm = TRUE)
+  s <- sd(x, na.rm = TRUE)
+
+  lower <- m - k * s
+  upper <- m + k * s
+
+  # Cap values outside the bounds
+  x_capped <- pmin(pmax(x, lower), upper)
+
+  return(x_capped)
+}
