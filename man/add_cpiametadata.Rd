@@ -64,8 +64,10 @@ df_meta <- add_cpiametadata(
   variable = "q15a",
   source = "CLIAR",
   var_name = "Efficient use of assets",
-  var_description = "To what extent does the government make efficient use of assets?",
-  var_description_short = "Measures the extent to which the government makes efficient use of assets."
+  var_description = "To what extent does the government make efficient
+    use of assets?",
+  var_description_short = "Measures the extent to which the government
+    makes efficient use of assets.",
   theoretical_range = c(0, 1)
 )
 attributes(df_meta)

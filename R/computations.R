@@ -22,7 +22,7 @@
 #' convert_ctf_to_cpia(c(NA, 0.8, 0.7))
 #'
 #' @export
-#'
+#' @importFrom stats sd
 convert_ctf_to_cpia <- function(x){
 
   y <- 5 * mean(x, na.rm = TRUE) + 1

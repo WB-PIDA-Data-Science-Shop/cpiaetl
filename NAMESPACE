@@ -3,3 +3,4 @@
 export(add_cpiametadata)
 export(combine_metadata)
 export(convert_ctf_to_cpia)
+importFrom(stats,sd)
