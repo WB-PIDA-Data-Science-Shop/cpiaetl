@@ -260,8 +260,6 @@ rawcpia_tbl <- full_join(rawcpia_tbl |> unique(),
                          add_tbl,
                          by = c("country_code", "year"))
 
-# usethis::use_data(cpia, overwrite = TRUE)
-# usethis::use_data(cpia_indicators, overwrite = TRUE)
 
 rawcpia_tbl <-
   rawcpia_tbl |>
@@ -328,11 +326,95 @@ raw <- raw %>%
 rawcpia_tbl_with_varrow <- raw
 
 
+#### lets include country information prepare the data for lazy loading 
+standard_cpia <- 
+  basiccpia_tbl |> 
+  merge(wbcountries, by = "country_code", all = TRUE) |>
+  as_tibble()
+
+africaii_cpia <- 
+  aiicpia_tbl |>
+  merge(wbcountries, by = "country_code", all = TRUE) |>
+  as_tibble()
+
+rawdata_cpia <- 
+  rawcpia_tbl_with_varrow |>
+  merge(wbcountries, by = "country_code", all = TRUE) |>
+  as_tibble() |> 
+  mutate(cpia_year = as.integer(cpia_year))
+
+metadata_cpia <- cpiameta_tbl 
+
+#### lets actually create regional and income group summaries
+group_standard_cpia <- 
+  bind_rows(
+  standard_cpia |>
+    group_by(income_group, cpia_year) |>
+    summarise(across(q12a:q16d, ~mean(.x, na.rm = TRUE)), .groups = "drop") |>
+    rename(group = income_group) |>
+    mutate(group_type = "Income Group"),
+  
+  standard_cpia |>
+    group_by(region, cpia_year) |>
+    summarise(across(q12a:q16d, ~mean(.x, na.rm = TRUE)), .groups = "drop") |>
+    rename(group = region) |>
+    mutate(group_type = "Region")
+)
+
+group_africaii_cpia <- 
+  bind_rows(
+  africaii_cpia |>
+    group_by(income_group, cpia_year) |>
+    summarise(across(q12a:q16d, ~mean(.x, na.rm = TRUE)), .groups = "drop") |>
+    rename(group = income_group) |>
+    mutate(group_type = "Income Group"),
+  
+  africaii_cpia |>
+    group_by(region, cpia_year) |>
+    summarise(across(q12a:q16d, ~mean(.x, na.rm = TRUE)), .groups = "drop") |>
+    rename(group = region) |>
+    mutate(group_type = "Region")
+)
+
+group_rawdata_cpia <- 
+  bind_rows(
+  rawcpia_tbl |>
+    merge(wbcountries, by = "country_code", all = TRUE) |>
+    as_tibble() |>
+    mutate(year = as.integer(year)) |>
+    group_by(income_group, year) |>
+    summarise(across(where(is.numeric), ~mean(.x, na.rm = TRUE)), .groups = "drop") |>
+    rename(group = income_group) |>
+    mutate(group_type = "Income Group"),
+  
+  rawcpia_tbl |>
+    merge(wbcountries, by = "country_code", all = TRUE) |>
+    as_tibble() |>
+    mutate(year = as.integer(year)) |>
+    group_by(region, year) |>
+    summarise(across(where(is.numeric), ~mean(.x, na.rm = TRUE)), .groups = "drop") |>
+    rename(group = region) |>
+    mutate(group_type = "Region")
+)
+
+
+
+# Save datasets to package data
+usethis::use_data(standard_cpia, overwrite = TRUE)
+usethis::use_data(africaii_cpia, overwrite = TRUE)
+usethis::use_data(rawdata_cpia, overwrite = TRUE)
+usethis::use_data(metadata_cpia, overwrite = TRUE)
+usethis::use_data(group_standard_cpia, overwrite = TRUE)
+usethis::use_data(group_africaii_cpia, overwrite = TRUE)
+usethis::use_data(group_rawdata_cpia, overwrite = TRUE)
+
 list(cpia_with_aii = aiicpia_tbl |> arrange(country_code, year),
      cpia_basic = basiccpia_tbl |> arrange(country_code, year),
      cpia_raw = rawcpia_tbl_with_varrow,
      cpia_metadata = cpiameta_tbl |> arrange(variable)) |>
   writexl::write_xlsx("data-raw/output/cpia.xlsx")
+
+
 
 
 

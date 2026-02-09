@@ -52,7 +52,6 @@ meta_df <-
 
 meta_df <- bind_rows(meta_df, attr_tbl)
 
-
 cpia_indicators <- meta_df |> arrange(variable)
 
 rm(meta_df)

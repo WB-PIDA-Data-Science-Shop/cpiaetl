@@ -11,4 +11,9 @@ Encoding: UTF-8
 LazyData: true
 Depends: 
     R (>= 3.5)
+Imports:
+    purrr,
+    tibble
+Suggests:
+    dplyr
 RoxygenNote: 7.3.3
