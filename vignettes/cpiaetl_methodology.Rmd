@@ -1,0 +1,714 @@
+---
+title: "Scoring the CPIA with Publicly Available Data"
+subtitle: "Methodological Note"
+author: "World Bank Governance Global Practice"
+date: "`r Sys.Date()`"
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 3
+    number_sections: true
+vignette: >
+  %\VignetteIndexEntry{Scoring the CPIA with Publicly Available Data}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  echo = FALSE
+)
+```
+
+---
+
+# What Is the Publicly Available CPIA Scoring Framework?
+
+The Country Policy and Institutional Assessment (CPIA) evaluates the quality of policies and institutions in IDA-eligible countries. Official CPIA assessments are conducted annually through expert judgment and inform World Bank resource allocation decisions. However, these assessments are limited to IDA countries and do not publicly release subquestion-level scores.
+
+This methodological note describes a standardized data processing framework that generates proxy CPIA scores using publicly available governance indicators for questions 12–16, which fall under the responsibility of the World Bank's Governance Global Practice. The framework transforms indicator data from multiple sources into CPIA-comparable scores on a 1–6 scale, extending coverage beyond IDA countries and providing subquestion-level granularity for governance analysis.
+
+Historically, when governance specialists needed CPIA-style scores for non-IDA countries or subquestion-level analysis, they relied on decentralized, manual workflows. Different teams would independently process governance indicators using varied methods, leading to inconsistencies in scoring approaches and challenges in maintaining cross-year comparability. This methodological note establishes a structured Extract-Transform-Load (ETL) architecture that standardizes the data processing workflow.
+
+## Rationale for Standardized Processing
+
+The standardization of CPIA data processing and scoring addresses several institutional challenges:
+
+**Risks of Manual Aggregation**: When governance specialists manually aggregate indicator data, the risk of computational errors, formula inconsistencies, and data entry mistakes increases. Different analysts may apply different normalization approaches or handle missing values inconsistently.
+
+**Cross-Year Comparability**: Without standardized processing rules, methodological adjustments made in one year may not be consistently applied in subsequent years, compromising the ability to track governance trends over time.
+
+**Auditability Requirements**: Institutional quality assurance requires clear documentation of how scores are derived from source data. Manual workflows often lack systematic audit trails, making it difficult to verify or reproduce published results.
+
+**Institutional Memory Challenges**: When scoring logic resides in individual analysts' spreadsheets or undocumented scripts, institutional knowledge is lost during staff transitions. Standardized frameworks preserve methodological consistency across teams and over time.
+
+**Reproducibility Constraints**: For World Bank outputs to support evidence-based policymaking, the underlying data processing must be reproducible. Manual workflows introduce variability that undermines reproducibility.
+
+The framework described in this note addresses these challenges by establishing a single, documented, version-controlled approach to CPIA data processing.
+
+## Scope of This Methodological Note
+
+This note focuses specifically on CPIA questions 12–16, which are under the purview of the World Bank's Governance Global Practice. These questions assess property rights and rule-based governance (Q12), quality of budgetary and financial management (Q13), quality of public administration (Q15), and transparency, accountability, and corruption in the public sector (Q16).
+
+This note describes:
+
+1. The data sources and indicator selection logic for governance questions
+2. The transformation methodology from raw indicators to CPIA scores
+3. The aggregation rules for subquestions and criteria
+4. Quality assurance mechanisms and reproducibility safeguards
+5. Operational integration within World Bank governance workflows
+
+This note does **not** describe changes to the conceptual CPIA framework itself. The CPIA criteria definitions, subquestion structures, and scoring scale (1–6) follow official CPIA documentation. The methodology described here addresses data processing implementation using publicly available data, not the substantive governance assessment framework.
+
+---
+
+# What Is Covered in the CPIA Processing Framework?
+
+## Input Data Sources
+
+The framework integrates governance indicators from six sources:
+
+**CLIAR (Country Level Institutional Assessment Review)**: 40 indicators from the World Bank's Closeness-to-Frontier governance assessments, covering public financial management, service delivery, and institutional capacity.
+
+**African Integrity Indicators (AII)**: 28 indicators from Global Integrity's Africa Integrity Indicators project, providing detailed governance metrics for African countries.
+
+**Data360**: 8 governance indicators from the World Bank's Data360 platform, including World Governance Indicators (WGI) dimensions.
+
+**World Governance Indicators (WGI)**: 3 indicators measuring rule of law, government effectiveness, and control of corruption.
+
+**Heritage Foundation**: 2 indicators measuring property rights protection and government integrity.
+
+**World Development Indicators (WDI)**: 1 governance-related development indicator.
+
+All source indicators are normalized to a 0–1 scale prior to transformation.
+
+## CPIA Criteria and Subquestion Structure
+
+The framework covers four CPIA criteria managed by the Governance Global Practice, disaggregated into 11 subquestions. Note that subquestions 13a (composition and quality of the budget) and 13c (transparency and comprehensiveness of financial information) are not included because publicly available data sources adequate to proxy these specific dimensions could not be identified. The Governance team is actively working on alternative data sources and methodologies to address these gaps in future iterations.
+
+### Criterion 12: Property Rights and Rule-based Governance
+
+- **Q12a**: Legal framework for secure property and contract rights
+- **Q12b**: Quality of the legal and judicial system
+- **Q12c**: Crime and violence as an impediment to economic activity
+
+### Criterion 13: Quality of Budgetary and Financial Management
+
+- **Q13b**: Effective financial management systems
+- **Q13a**: *Not included (no suitable public data identified)*
+- **Q13c**: *Not included (no suitable public data identified)*
+
+### Criterion 15: Quality of Public Administration
+
+- **Q15a**: Core administration managing its own operations
+- **Q15b**: Ensuring quality in policy implementation and regulatory management
+- **Q15c**: Coordinating public sector human resources management
+
+### Criterion 16: Transparency, Accountability and Corruption in the Public Sector
+
+- **Q16a**: Accountability of the executive
+- **Q16b**: Access of civil society to information on public affairs
+- **Q16c**: State capture by narrow vested interests
+- **Q16d**: Integrity in the management of public resources
+
+## Score Scale and Aggregation Structure
+
+All subquestion scores use the standard CPIA scale of 1–6, where:
+
+- **1** = Very weak performance
+- **6** = Very strong performance
+
+The framework produces three primary datasets:
+
+1. **Standard CPIA**: Scores using globally consistent indicators
+2. **Africa-Enhanced CPIA**: African Integrity Indicators added to the Standard CPIA in (1) (only recommended to be used in African countries)
+3. **Raw Data**: Normalized indicator values before CPIA transformation
+
+Additionally, regional and income group aggregations are produced for each primary dataset.
+
+## What Is Not Covered
+
+This framework does **not**:
+
+- Modify official CPIA criteria definitions
+- Alter the conceptual basis of CPIA assessments
+- Replace expert judgment in official CPIA processes
+- Introduce new governance dimensions beyond existing CPIA criteria
+- Provide policy recommendations or country-specific interpretations
+
+---
+
+# CPIA Scoring and Aggregation Methodology
+
+## Indicator-Level Processing
+
+### Data Cleaning and Validation
+
+Raw indicator data undergo the following processing steps:
+
+**Range Validation**: All indicators are verified to fall within their expected ranges. Indicators normalized on a 0–1 scale are checked for values outside this interval.
+
+**Missing Value Identification**: Missing data are explicitly coded and tracked. No imputation is performed; missing values are excluded from calculations.
+
+**Outlier Capping**: To prevent extreme values from distorting score distributions, outliers are capped at three standard deviations from the mean. For indicator $x$ with mean $\mu$ and standard deviation $\sigma$:
+
+$$
+x_{\text{capped}} = \max\left(\mu - 3\sigma, \min(x, \mu + 3\sigma)\right)
+$$
+
+**Country Code Validation**: Country identifiers are validated against official ISO 3-letter codes and World Bank country classifications.
+
+**Time Period Validation**: Year variables are validated to ensure consistency with source data vintages.
+
+### Normalization
+
+All indicators are transformed to a common 0–1 scale prior to aggregation. Indicators already on a 0–1 scale retain their original values. Indicators on other scales are linearly transformed:
+
+$$
+x_{\text{normalized}} = \frac{x - x_{\min}}{x_{\max} - x_{\min}}
+$$
+
+Where $x_{\min}$ and $x_{\max}$ represent the theoretical minimum and maximum values for the indicator. In some cases, raw indicators are mathematically inverted to maintain consistent intuition with the CPIA sub-question being proxied.
+
+## Subquestion Aggregation
+
+### Arithmetic Mean Aggregation
+
+For each subquestion, the score is calculated as the arithmetic mean of all contributing normalized indicators:
+
+$$
+\text{Score}_q = 5 \times \bar{x} + 1
+$$
+
+Where:
+
+- $\text{Score}_q$ is the final CPIA score for subquestion $q$ (on the 1–6 scale)
+- $\bar{x}$ is the mean of normalized indicators contributing to subquestion $q$
+- $\bar{x} = \frac{1}{n}\sum_{i=1}^{n} x_i$, where $x_i \in [0,1]$
+- Missing values are excluded from the mean calculation
+
+This transformation maps:
+
+- $\bar{x} = 0$ → Score = 1 (lowest CPIA performance)
+- $\bar{x} = 0.5$ → Score = 3.5 (midpoint)
+- $\bar{x} = 1$ → Score = 6 (highest CPIA performance)
+
+### Equal Weighting
+
+All indicators contributing to a subquestion receive equal weight in the aggregation. No differential weighting scheme is applied. This design choice ensures:
+
+1. Transparency in how indicators combine
+2. Consistency across subquestions
+3. Simplicity in interpretation
+
+If governance specialists determine that certain indicators should receive greater weight, such adjustments must be made outside this framework and documented separately.
+
+### Handling Missing Data
+
+When some but not all indicators for a subquestion are missing, the subquestion score is calculated from available indicators only. When all indicators for a subquestion are missing, the subquestion receives no score (coded as `NA`).
+
+Missing values do not propagate across subquestions. If one subquestion has missing data, other subquestions for the same country-year are calculated normally.
+
+## Temporal Alignment
+
+CPIA scores reflect policies and institutions observed in year $t$ but assessed in year $t+1$. To align with official CPIA conventions, the framework includes a "CPIA year" variable calculated as:
+
+$$
+\text{CPIA Year} = \text{Data Year} + 1
+$$
+
+This ensures that proxy scores correspond temporally with official CPIA assessment years.
+
+---
+
+# Indicator Selection and Mapping by Sub-Question
+
+The following table shows the mapping between each CPIA sub-question and the specific indicators used to construct proxy scores. Each sub-question is represented by one or more indicators drawn from various governance databases.
+
+```{r mapping-table, echo=FALSE}
+library(dplyr)
+library(knitr)
+
+# Load the metadata_cpia dataset
+data("metadata_cpia", package = "cpiaetl")
+
+# Create the mapping table with bold indicators
+mapping_table <- metadata_cpia |>
+  mutate(indicator_formatted = paste0("**", indicator, "** (", var_description_short, ")")) |>
+  group_by(variable) |>
+  summarise(
+    `Indicators` = paste(indicator_formatted, collapse = "; "),
+    .groups = "drop"
+  ) |>
+  rename(`Sub-Question` = variable) |>
+  arrange(`Sub-Question`)
+
+kable(mapping_table, 
+      caption = "CPIA Sub-Question Indicator Mapping",
+      format = "markdown")
+```
+
+This mapping ensures transparency in the selection of proxy indicators for each CPIA dimension. The indicators were selected based on conceptual alignment with official CPIA assessment criteria and data availability across countries and time periods.
+
+---
+
+# Data Engineering Architecture
+
+The data processing framework follows a four-stage pipeline:
+
+```
+┌─────────────────────────────────────────────────────┐
+│ STAGE 1: DATA INGESTION                            │
+│                                                     │
+│ - Load raw indicators from source datasets         │
+│ - Validate country codes and time periods          │
+│ - Check data structure integrity                   │
+└──────────────────────┬──────────────────────────────┘
+                       ↓
+┌─────────────────────────────────────────────────────┐
+│ STAGE 2: INDICATOR NORMALIZATION                   │
+│                                                     │
+│ - Apply outlier capping (mean ± 3 SD)              │
+│ - Transform to 0–1 scale                           │
+│ - Flag and handle missing values                   │
+└──────────────────────┬──────────────────────────────┘
+                       ↓
+┌─────────────────────────────────────────────────────┐
+│ STAGE 3: AGGREGATION AND SCORING                   │
+│                                                     │
+│ - Group indicators by subquestion                  │
+│ - Calculate mean normalized values                 │
+│ - Apply CPIA transformation (5 × mean + 1)         │
+└──────────────────────┬──────────────────────────────┘
+                       ↓
+┌─────────────────────────────────────────────────────┐
+│ STAGE 4: METADATA ENRICHMENT                       │
+│                                                     │
+│ - Merge country classifications                    │
+│ - Add CPIA year (year + 1)                         │
+│ - Generate regional and income group aggregates    │
+└─────────────────────────────────────────────────────┘
+```
+
+## Separation of Data and Logic
+
+The framework maintains strict separation between:
+
+- **Data**: Raw indicator values stored in structured datasets
+- **Processing Logic**: Transformation rules implemented in documented functions
+- **Metadata**: Indicator definitions and mappings stored separately
+
+This separation ensures that methodological changes can be implemented without modifying source data, and that data updates do not require changes to processing logic.
+
+## Deterministic Processing
+
+All transformations are deterministic: given identical input data, the framework produces identical output scores. No random processes, subjective adjustments, or stochastic elements are involved. This determinism ensures:
+
+1. Reproducibility across different analysts
+2. Consistency across time periods
+3. Auditability of results
+
+## Automated Validation
+
+The framework incorporates automated validation checks at each processing stage:
+
+- **Input Validation**: Verifies that source data conform to expected structures
+- **Transformation Validation**: Confirms that normalized values fall within valid ranges
+- **Aggregation Validation**: Checks that subquestion scores fall within 1–6
+- **Metadata Validation**: Ensures country classifications are complete and consistent
+
+These checks generate error messages when data quality issues are detected, preventing invalid scores from being published.
+
+## Audit Trail Generation
+
+Each processed dataset includes metadata documenting:
+
+- Date of processing
+- Source data versions used
+- Framework version applied
+- Processing timestamp
+
+This audit trail enables traceability of how published scores were generated.
+
+---
+
+# Reproducibility and Quality Assurance
+
+## Automated Testing
+
+The framework includes automated tests that validate:
+
+**Transformation Correctness**: Verifies that the CPIA transformation formula produces expected outputs for known inputs (e.g., normalized value of 0 produces CPIA score of 1).
+
+**Outlier Capping**: Confirms that extreme values are correctly capped at three standard deviations.
+
+**Missing Value Handling**: Validates that missing data are excluded from calculations without propagating to other subquestions.
+
+**Aggregation Logic**: Checks that arithmetic means are calculated correctly across multiple indicators.
+
+**Metadata Completeness**: Ensures that all country classifications and temporal variables are populated.
+
+These tests run automatically whenever processing logic is modified, ensuring that changes do not introduce errors.
+
+## Version Control
+
+All processing logic is maintained under version control using Git. Each methodological change is:
+
+1. Documented in commit messages
+2. Reviewed before implementation
+3. Tagged with semantic version numbers (MAJOR.MINOR.PATCH)
+
+**MAJOR version changes** indicate breaking changes to data structures or methodological revisions.
+
+**MINOR version changes** indicate new features or additional indicators.
+
+**PATCH version changes** indicate bug fixes or documentation updates.
+
+## Continuous Integration
+
+Automated checks run on every proposed change to processing logic, validating:
+
+- All automated tests pass
+- Documentation is up to date
+- Data structures remain consistent
+- No regression errors are introduced
+
+Only changes that pass all checks are incorporated into production processing.
+
+## Change Tracking
+
+A structured change log documents:
+
+- What methodological changes were made
+- Why changes were made
+- When changes were implemented
+- How changes affect published scores
+
+This change log supports institutional memory and enables users to understand differences between score versions.
+
+---
+
+# Comparing This Framework to Alternative Workflows
+
+## Manual Excel-Based Workflows
+
+Traditional approaches to processing governance indicators often involve:
+
+- Downloading raw data into Excel spreadsheets
+- Manually applying normalization formulas
+- Copy-pasting aggregated scores between worksheets
+- Storing intermediate calculations in multiple files
+
+**Limitations**:
+
+- High risk of formula errors or copy-paste mistakes
+- Difficult to track methodological changes
+- Challenging to reproduce results
+- Limited version control
+- Inconsistent handling of missing data
+
+## Ad Hoc Scripts
+
+Some teams develop custom R or Python scripts to process governance data. While more reproducible than manual Excel workflows, ad hoc scripts face challenges:
+
+- Script logic is not documented outside code comments
+- Different analysts may develop incompatible scripts
+- Limited testing and validation
+- Difficult to maintain across staff transitions
+
+## Decentralized Team-Level Aggregation
+
+When different teams independently process the same source data, methodological inconsistencies emerge:
+
+- Varying normalization approaches
+- Different outlier treatment
+- Inconsistent missing value handling
+- Divergent aggregation rules
+
+These inconsistencies undermine cross-team comparability and create confusion when results differ.
+
+## Advantages of Structured ETL
+
+The standardized framework addresses these limitations by:
+
+1. **Eliminating Manual Errors**: Automated processing removes risks of copy-paste mistakes or formula errors.
+2. **Ensuring Consistency**: All users apply identical transformation rules.
+3. **Supporting Reproducibility**: Published scores can be regenerated from source data.
+4. **Enabling Auditability**: Every processing step is documented and traceable.
+5. **Facilitating Updates**: When source data are refreshed, all outputs update automatically using consistent logic.
+
+---
+
+# Methodology Caveats – User Warnings
+
+## Dependence on Input Integrity
+
+The framework assumes that source indicator data are accurate and up to date. If source databases contain errors or are not regularly maintained, output scores will reflect those limitations. Users should:
+
+- Verify source data vintages before interpretation
+- Consult indicator metadata to understand coverage and limitations
+- Triangulate with other governance data sources when possible
+
+## Does Not Alter CPIA Conceptual Framework
+
+This framework implements a data processing methodology for proxy CPIA scores. It does not:
+
+- Revise official CPIA criteria definitions
+- Introduce new governance dimensions
+- Modify the 1–6 scoring scale
+- Change the conceptual basis of CPIA assessments
+
+The subquestion definitions and criteria structures follow official CPIA documentation. Any conceptual changes to CPIA itself must be addressed through official CPIA review processes, not through this data processing framework.
+
+## Does Not Replace Expert Judgment
+
+Official CPIA assessments incorporate expert judgment, country context, and qualitative information that cannot be fully captured by quantitative indicators. The proxy scores generated by this framework:
+
+- Provide data-driven alternatives for analytical purposes
+- Extend coverage beyond IDA countries
+- Enable subquestion-level analysis not available in official CPIA
+
+However, they do not replace the nuanced, expert-driven assessments conducted for official CPIA. For operational decisions, official CPIA scores should always be prioritized when available.
+
+## Sensitive to Missing Data
+
+When source indicators have limited coverage or missing observations, subquestion scores may:
+
+- Be calculated from fewer indicators than intended
+- Receive no score if all indicators are missing
+- Exhibit greater volatility across years if indicator availability varies
+
+Users should consult the raw data and metadata to understand which indicators contribute to each subquestion score and identify coverage gaps.
+
+## Version Dependency
+
+Scores generated under different versions of the processing framework may not be directly comparable if methodological changes have occurred. Users should:
+
+- Document which framework version was used for analysis
+- Consult the change log when comparing scores across publications
+- Regenerate historical scores using the latest framework version when long-term comparisons are needed
+
+## Not a Causal Analysis Tool
+
+CPIA scores measure the quality of policies and institutions but do not establish causal relationships with development outcomes. Correlation between CPIA scores and economic performance does not imply causation. Analysts using these data for research should:
+
+- Apply appropriate econometric methods for causal inference
+- Control for confounding factors
+- Acknowledge endogeneity concerns
+- Interpret results within broader governance literature
+
+---
+
+# Operational Integration within the World Bank
+
+## How Governance Teams Should Use Outputs
+
+The framework produces several datasets suitable for different analytical purposes:
+
+**Standard CPIA Dataset**: Use for cross-country comparisons requiring globally consistent indicators. Suitable for analyses covering countries beyond Africa or when AII data availability is limited.
+
+**Africa-Enhanced CPIA Dataset**: Use for Africa-focused governance analysis when African Integrity Indicators provide higher-resolution data.
+
+**Raw Indicator Data**: Use for understanding which specific governance indicators drive subquestion scores or for conducting sensitivity analyses.
+
+**Regional and Income Group Aggregates**: Use for tracking governance trends across regions or income groups over time.
+
+Governance specialists should select the dataset appropriate for their analytical question and document which dataset was used in reporting.
+
+## Relationship to Dashboards
+
+The framework outputs are integrated into governance dashboards that provide interactive visualizations of CPIA proxy scores. Dashboard users can:
+
+- Filter by country, region, or income group
+- Track trends over time
+- Compare subquestion scores across countries
+- Access underlying indicator data
+
+Dashboards facilitate exploratory analysis but do not replace careful interpretation of governance data in country-specific context.
+
+## Integration with CPIA Write-Ups
+
+When governance specialists prepare country-level governance diagnostics or CPIA-related write-ups, the framework outputs can:
+
+- Provide quantitative benchmarking data for non-IDA countries
+- Offer subquestion-level detail not available in official CPIA
+- Support trend analysis across longer time periods
+- Enable cross-country comparisons using consistent metrics
+
+However, write-ups should clearly distinguish between official CPIA assessments and proxy scores generated by this framework.
+
+## Implications for Cross-Year Comparability
+
+The standardized processing ensures that methodological changes are documented and consistently applied. When comparing scores across years, users should:
+
+- Verify that the same framework version was used
+- Check for changes in source indicator availability
+- Consult the change log for any methodological revisions
+- Consider regenerating historical scores if framework updates have occurred
+
+## Role in Institutional Reporting
+
+The framework supports institutional reporting needs by:
+
+- Providing reproducible governance metrics for country diagnostics
+- Enabling consistent cross-country comparisons
+- Supporting dashboard visualizations for internal and external audiences
+- Facilitating data-driven governance policy dialogue
+
+However, framework outputs are not substitutes for official CPIA assessments in operational contexts requiring formal scoring.
+
+---
+
+# References
+
+World Bank. (2023). *Country Policy and Institutional Assessment: Criteria and Questionnaire*. Washington, DC: World Bank.
+
+World Bank. (2024). *World Governance Indicators 2024: Methodology and Analytical Issues*. Washington, DC: World Bank.
+
+Kaufmann, D., Kraay, A., & Mastruzzi, M. (2011). "The Worldwide Governance Indicators: Methodology and Analytical Issues." *Hague Journal on the Rule of Law*, 3(2), 220–246.
+
+Heritage Foundation. (2024). *Index of Economic Freedom: Methodology*. Washington, DC: Heritage Foundation.
+
+Global Integrity. (2022). *Africa Integrity Indicators: Methodology*. Washington, DC: Global Integrity.
+
+---
+
+# Appendix A: Technical Processing Details
+
+## CPIA Transformation Formula
+
+For each subquestion $q$ with normalized indicators $x_1, x_2, \ldots, x_n$ where $x_i \in [0,1]$:
+
+$$
+\text{Score}_q = 5 \times \left(\frac{1}{n}\sum_{i=1}^{n} x_i\right) + 1
+$$
+
+Equivalently:
+
+$$
+\text{Score}_q = 5 \times \bar{x} + 1
+$$
+
+Where $\bar{x}$ is the arithmetic mean of non-missing normalized indicators.
+
+**Properties**:
+
+- Minimum score: 1 (when $\bar{x} = 0$)
+- Maximum score: 6 (when $\bar{x} = 1$)
+- Midpoint: 3.5 (when $\bar{x} = 0.5$)
+- Linear transformation preserves relative distances
+
+## Outlier Capping Formula
+
+For indicator $x$ with sample mean $\mu$ and sample standard deviation $\sigma$:
+
+$$
+x_{\text{capped}} = \begin{cases}
+\mu - 3\sigma & \text{if } x < \mu - 3\sigma \\
+x & \text{if } \mu - 3\sigma \leq x \leq \mu + 3\sigma \\
+\mu + 3\sigma & \text{if } x > \mu + 3\sigma
+\end{cases}
+$$
+
+This approach caps extreme values at three standard deviations from the mean while preserving values within the normal range.
+
+## Variable Schema
+
+### Standard CPIA and Africa-Enhanced CPIA Datasets
+
+| Variable | Type | Description | Range/Values |
+|----------|------|-------------|--------------|
+| `country_code` | character | ISO 3-letter country code | ISO 3166-1 alpha-3 |
+| `year` | integer | Calendar year of data collection | 2005–2024 |
+| `q12a` | numeric | Property rights legal framework | 1–6 or NA |
+| `q12b` | numeric | Legal and judicial system quality | 1–6 or NA |
+| `q12c` | numeric | Crime and violence impediment | 1–6 or NA |
+| `q13b` | numeric | Financial management systems | 1–6 or NA |
+| `q15a` | numeric | Core admin operations | 1–6 or NA |
+| `q15b` | numeric | Policy implementation quality | 1–6 or NA |
+| `q15c` | numeric | HR management coordination | 1–6 or NA |
+| `q16a` | numeric | Executive accountability | 1–6 or NA |
+| `q16b` | numeric | Civil society information access | 1–6 or NA |
+| `q16c` | numeric | State capture | 1–6 or NA |
+| `q16d` | numeric | Public resource integrity | 1–6 or NA |
+| `cpia_year` | integer | Assessment year (year + 1) | 2006–2025 |
+| `economy` | character | Country name | — |
+| `income_group` | character | World Bank income classification | Low, Lower middle, Upper middle, High income |
+| `lending_category` | character | Lending classification | IDA, IBRD, Blend, NA |
+| `region_code` | character | Region abbreviation | AFE, AFW, EAP, ECA, LAC, MENAAP, SAR, NAC |
+| `region` | character | Full region name | — |
+
+### Region Code Definitions
+
+- **AFE**: Africa Eastern and Southern
+- **AFW**: Africa Western and Central
+- **EAP**: East Asia and Pacific
+- **ECA**: Europe and Central Asia
+- **LAC**: Latin America and Caribbean
+- **MENAAP**: Middle East, North Africa, Afghanistan, and Pakistan
+- **SAR**: South Asia
+- **NAC**: North America
+
+## Validation Rules
+
+**Rule 1**: All CPIA subquestion scores must fall within [1, 6] or be coded as NA.
+
+**Rule 2**: Country codes must match ISO 3166-1 alpha-3 standard.
+
+**Rule 3**: Year variables must be within valid data collection period (2005–2024 for source data; 2006–2025 for CPIA year).
+
+**Rule 4**: Income group must be one of: "Low income", "Lower middle income", "Upper middle income", "High income", or NA.
+
+**Rule 5**: Region code must be one of: AFE, AFW, EAP, ECA, LAC, MENAAP, SAR, NAC, or NA.
+
+**Rule 6**: Normalized indicators must fall within [0, 1] after outlier capping.
+
+---
+
+# Appendix B: Versioning and Change Log Structure
+
+## Semantic Versioning
+
+The framework follows semantic versioning (MAJOR.MINOR.PATCH):
+
+**MAJOR version** increments when:
+
+- Data structure changes break backward compatibility
+- Methodological revisions alter scoring logic substantially
+- Subquestion definitions are added or removed
+
+**MINOR version** increments when:
+
+- New source indicators are added
+- Additional features are implemented (e.g., new aggregations)
+- Backward-compatible enhancements are made
+
+**PATCH version** increments when:
+
+- Bug fixes are implemented
+- Documentation is updated
+- Minor corrections are made without affecting scores
+
+## Treatment of Methodological Updates
+
+When methodological changes occur:
+
+1. **Documentation**: Changes are documented in the change log with effective date
+2. **Version Tag**: A new version number is assigned
+3. **Historical Regeneration**: Users are advised whether historical scores should be regenerated
+4. **Notification**: Governance teams using framework outputs are notified of changes
+
+## Data Revision Handling
+
+When source indicator data are revised by their providers:
+
+1. **Tracking**: Revisions are logged with date and source
+2. **Regeneration**: Affected CPIA proxy scores are regenerated using revised inputs
+3. **Versioning**: Framework version number is not incremented (data revisions do not constitute methodological changes)
+4. **Metadata Update**: Dataset metadata are updated to reflect new source data vintage
+
+---
+
+**End of Methodological Note**

@@ -1,11 +1,11 @@
 Package: cpiaetl
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Scoring the CPIA with Publicly-Available Data
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Author: person("Ifeanyi", "Edochie", , "iedochie@worldbank.org", role = c("aut", "cre"))
+Maintainer: The package maintainer <iedochie@worldbank.org>
+Description: A standardized data processing framework that generates proxy CPIA scores using 
+    publicly available governance indicators for questions 12–16.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
@@ -15,5 +15,8 @@ Imports:
     purrr,
     tibble
 Suggests:
-    dplyr
+    dplyr,
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
 RoxygenNote: 7.3.3
