@@ -5,3 +5,6 @@
 ^data-raw$
 ^LICENSE\.md$
 ^\.github$
+^doc$
+^Meta$
+^vignettes/rsconnect$

@@ -15,5 +15,8 @@ Imports:
     purrr,
     tibble
 Suggests:
-    dplyr
+    dplyr,
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
 RoxygenNote: 7.3.3
